@@ -15,38 +15,38 @@ function Table({
       .join("");
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full min-w-[640px]">
         {/* Table Head */}
-        <thead>
-          <tr className="border-b text-left">
+        <thead className="bg-blue-100">
+          <tr className="border-b border-slate-200 text-left">
             {columns.map((column, index) => (
-              <th key={index} className="py-4 px-4">
+              <th key={index} className="px-6 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
                 {column}
               </th>
             ))}
 
             {renderActions && (
-              <th className="py-4 px-4">Actions</th>
+              <th className="px-6 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-500">Actions</th>
             )}
           </tr>
         </thead>
 
         {/* Table Body */}
-        <tbody>
+        <tbody className="divide-y divide-slate-100">
           {data.map((item, index) => (
-            <tr key={index} className="border-b hover:bg-gray-50">
+            <tr key={index} className="transition hover:bg-blue-50">
               {columns.map((column, colIndex) => {
                 const fieldKey = getFieldKey(column);
                 return (
-                  <td key={colIndex} className="py-4 px-4">
+                  <td key={colIndex} className="px-6 py-4 text-sm font-semibold text-slate-700">
                     {item[fieldKey]}
                   </td>
                 );
               })}
 
               {renderActions && (
-                <td className="py-4 px-4 space-x-3">
+                <td className="space-x-3 px-6 py-4">
                   {renderActions(item)}
                 </td>
               )}

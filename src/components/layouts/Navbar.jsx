@@ -3,119 +3,86 @@ import {
   FaUserCircle,
   FaCog,
   FaSignOutAlt,
+  FaSearch,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef();
+
   useEffect(() => {
-
-  function handleClickOutside(event) {
-
-    // Agar click dropdown ke bahar hua
-
-    if (
-      dropdownRef.current &&
-      !dropdownRef.current.contains(event.target)
-    ) {
-
-      setOpen(false);
-
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
     }
-  }
 
-  // Event Listener
+    document.addEventListener("mousedown", handleClickOutside);
 
-  document.addEventListener(
-    "mousedown",
-    handleClickOutside
-  );
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  // Cleanup
-
-  return () => {
-
-    document.removeEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-  };
-
-}, []);
   return (
-    <div className="h-20 bg-white shadow-sm flex items-center justify-between px-8">
-      {/* Search */}
-      <input
-        type="text"
-        placeholder="Search..."
-        className="border border-gray-300 rounded-xl px-5 py-3 w-96 outline-none"
-      />
-
-      {/* Profile Section */}
-      <div
-        className="relative"
-        ref={dropdownRef}
-      >
-        {/* Profile Button */}
-        <div
-          onClick={() => setOpen(!open)}
-          className="flex items-center gap-4 cursor-pointer"
-        >
-          <div className="w-10 h-10 bg-blue-600 rounded-full"></div>
-          <div>
-            <h3 className="font-semibold">
-              John Admin
-            </h3>
-            <p className="text-gray-500 text-sm">
-              Administrator
-            </p>
-          </div>
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-blue-50 px-4 py-4 shadow-sm backdrop-blur xl:px-8">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500 shadow-inner shadow-white sm:max-w-md">
+          <FaSearch className="shrink-0 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search students, teachers..."
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
+          />
         </div>
-        {/* Dropdown */}
-        {open && (
-          <div className="absolute right-0 mt-4 w-60 bg-white rounded-2xl shadow-xl p-4 z-50">
-            {/* My Account */}
-            <Link to="/profile">
-              <div className="flex items-center gap-3 p-3 hover:bg-slate-100 rounded-xl cursor-pointer">
-                <FaUserCircle />
-                <span>
-                  My Account
-                </span>
-              </div>
-            </Link>
-            {/* Settings */}
-            <Link to="/settings">
-              <div className="flex items-center gap-3 p-3 hover:bg-slate-100 rounded-xl cursor-pointer">
-                <FaCog />
-                <span>
-                  Settings
-                </span>
-              </div>
-            </Link>
-            {/* Logout */}
-            <Link to="/">
 
-              <div className="flex items-center gap-3 p-3 hover:bg-red-100 text-red-500 rounded-xl cursor-pointer">
-
-                <FaSignOutAlt />
-
-                <span>
-                  Logout
-                </span>
-
-              </div>
-
-            </Link>
-
+        <div className="relative" ref={dropdownRef}>
+          <div
+            onClick={() => setOpen(!open)}
+            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-transparent p-1.5 transition hover:border-slate-200 hover:bg-slate-50"
+          >
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-600/25">
+              JA
+            </div>
+            <div className="hidden text-right sm:block">
+              <h3 className="text-sm font-bold text-slate-950">
+                John Admin
+              </h3>
+              <p className="text-xs font-medium text-slate-500">
+                Administrator
+              </p>
+            </div>
           </div>
 
-        )}
-
+          {open && (
+            <div className="absolute right-0 mt-3 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/15">
+              <Link to="/profile">
+                <div className="flex cursor-pointer items-center gap-3 rounded-xl p-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                  <FaUserCircle />
+                  <span>My Account</span>
+                </div>
+              </Link>
+              <Link to="/settings">
+                <div className="flex cursor-pointer items-center gap-3 rounded-xl p-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                  <FaCog />
+                  <span>Settings</span>
+                </div>
+              </Link>
+              <Link to="/">
+                <div className="flex cursor-pointer items-center gap-3 rounded-xl p-3 text-sm font-semibold text-red-500 hover:bg-red-50">
+                  <FaSignOutAlt />
+                  <span>Logout</span>
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-
-    </div>
+    </header>
   );
 }
 

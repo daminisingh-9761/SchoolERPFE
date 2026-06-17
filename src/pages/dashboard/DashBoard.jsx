@@ -91,12 +91,18 @@ function Dashboard() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <h1 className="text-4xl font-bold mb-8">
-          Dashboard Overview
-        </h1>
+      {/* <main className="px-2 pb-16 pt-4 sm:px-6 lg:pb-6 xl:px-8"> */}
+        {/* <section className="mb-8 overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-2xl shadow-slate-900/15 sm:p-8"> */}
+          <div className=" mt-2 px-1 py-1 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        
+              <p className=" text-2xl font-black uppercase tracking-[0.22em] text-black">
+                Dashboard
+              </p>
+            
+          </div>
+        {/* </section> */}
 
-        <div className="grid grid-cols-4 gap-6">
+        <div className="mt-1 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
           <StatsCard
             title="Total Students"
@@ -123,16 +129,16 @@ function Dashboard() {
           />
 
         </div>
-        <div className="grid grid-cols-2 gap-6 mt-10">
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
 
          <AttendanceChart />
          
          <FeesChart />
         </div>
-        <div className="mt-10">
+        <div className="mt-6">
           <StudentsTable />
         </div>
-      </div>
+      {/* </main> */}
     </Layout>
   );
 }

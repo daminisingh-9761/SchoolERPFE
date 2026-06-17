@@ -46,11 +46,17 @@ function StudentsTable() {
   }, []);
 
   return (
-    <div className="mt-8">
-
-      <h2 className="text-2xl font-bold mb-5">
-        Students List
-      </h2>
+    <section>
+      <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <h2 className="mt-1 text-xl tracking-tight text-black-600">
+            Students List
+          </h2>
+        </div>
+        <span className="text-sm font-semibold text-slate-500">
+          {students.length} records
+        </span>
+      </div>
 
       <Table
         columns={[
@@ -62,8 +68,7 @@ function StudentsTable() {
 
         data={students}
       />
-
-    </div>
+    </section>
   );
 }
 

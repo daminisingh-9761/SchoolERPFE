@@ -3,13 +3,17 @@ import Navbar from "./Navbar";
 
 function Layout({ children }) {
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-slate-100 text-slate-950">
       <Sidebar />
 
-      <div className="flex-1 bg-slate-100 min-h-screen">
+      <div className="min-w-0 flex-1 lg:ml-72">
         <Navbar />
 
-        {children}
+        {/* Content Area */}
+        <main className="px-8 py-6">
+          {children}
+        </main>
+
       </div>
     </div>
   );
