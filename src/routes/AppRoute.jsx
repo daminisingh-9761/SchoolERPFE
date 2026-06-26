@@ -6,55 +6,97 @@ import Teachers from "../pages/teachers/Teachers";
 import AddStudent from "../pages/students/AddStudent";
 import AddTeacher from "../pages/teachers/AddTeacher";
 import Login from "../pages/auth/Login";
-import Profile from "../pages/profile/Profile";
 import Attendance from "../pages/attendance/Attendance";
 import Fees from "../pages/fees/Fees";
 import Settings from "../pages/settings/Settings";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
 
       <Routes>
-          <Route
+        <Route
           path="/"
           element={<Login />}
         />
 
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/students"
-          element={<Students />}
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                "superadmin",
+                "teacher",
+              ]}
+            >
+              <Students />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/teachers"
-          element={<Teachers />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["superadmin"]}
+            >
+              <Teachers />
+            </ProtectedRoute>
+          }
         />
         <Route
-            path="/add-student"
-            element={<AddStudent />}
-       />
+          path="/add-student"
+          element={
+            <ProtectedRoute
+              allowedRoles={["superadmin"]}
+            >
+              <AddStudent />
+            </ProtectedRoute>
+          }
+        />
         <Route
-            path="/add-teacher"
-            element={<AddTeacher />}
+          path="/add-teacher"
+          element={
+            <ProtectedRoute
+              allowedRoles={["superadmin"]}
+            >
+              <AddTeacher />
+            </ProtectedRoute>
+          }
         />
 
         <Route
-            path="/profile"
-            element={<Profile />}
+          path="/attendance"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                "superadmin",
+                "teacher",
+              ]}
+            >
+              <Attendance />
+            </ProtectedRoute>
+          }
         />
-       <Route
-         path="/attendance"
-          element={<Attendance />}
-       />
         <Route
           path="/fees"
-          element={<Fees />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["superadmin"]}
+            >
+              <Fees />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/settings"

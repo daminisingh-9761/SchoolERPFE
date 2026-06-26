@@ -2,28 +2,51 @@ import Input from "/src/components/common/Input";
 import Button from "/src/components/common/Button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import api from "../../services/api";
 
 function Login() {
-  const[email,setEmail] = useState(""); 
-  
-  const[password,setPassword]= useState("");
+  const [email, setEmail] = useState("");
+
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  
-function handlelogin(){
-  console.log("Login button clicked");
-  console.log(email);
-  console.log(password);
-   if (email && password) {
-    navigate("/dashboard");
-    } else {
+
+  const handlelogin = async () => {
+
+    if (!email || !password) {
       alert("Please fill all fields");
-
+      return;
     }
-  }
+
+    try {
+
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
+      console.log(response.data);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(response.data)
+      );
+
+      alert(response.data.message);
+
+      navigate("/dashboard");
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert(
+        error.response?.data?.detail ||
+        "Login Failed"
+      );
+    }
+  };
 
 
- return (
+  return (
     <div className="min-h-screen bg-blue-100 flex items-center justify-center px-4">
 
       {/* Main Container */}
@@ -68,8 +91,8 @@ function handlelogin(){
               <Input
                 type="password"
                 placeholder="Enter your password"
-                onChange={(e)=> setPassword(e.target.value)}
-    
+                onChange={(e) => setPassword(e.target.value)}
+
               />
 
             </div>
@@ -96,7 +119,7 @@ function handlelogin(){
             {/* Login Button */}
             <Button
               text="Login"
-               className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all"
               onClick={handlelogin}
             />
           </div>

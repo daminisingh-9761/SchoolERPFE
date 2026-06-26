@@ -1,49 +1,42 @@
 import { useEffect, useState } from "react";
 import Table from "/src/components/common/Table";
-import { students as initialStudents } from "../../utils/constants";
+import api from "../../services/api";
+
 
 function StudentsTable() {
-  const [students, setStudents] = useState(initialStudents);
+ const [students, setStudents] = useState([]);
 
-  useEffect(() => {
-    const loadStudents = () => {
-      const saved = localStorage.getItem("students");
-      if (!saved) {
-        setStudents(initialStudents);
-        return;
-      }
+useEffect(() => {
 
-      try {
-        const parsed = JSON.parse(saved);
-        if (!Array.isArray(parsed)) {
-          setStudents(initialStudents);
-          return;
-        }
+  const fetchStudents = async () => {
 
-        setStudents(
-          parsed.map((student) => ({
-            ...student,
-            attendance: student.status === "Active" ? "Present" : "Absent",
-          }))
-        );
-      } catch {
-        setStudents(initialStudents);
-      }
-    };
+    try {
 
-    loadStudents();
+      const response = await api.get("/students/");
 
-    const handleStudentsUpdated = () => {
-      loadStudents();
-    };
+      const formattedStudents = response.data.map(
+        (student) => ({
+          ...student,
+          class: student.class,
+          attendance:
+            student.status === "Active"
+              ? "Present"
+              : "Absent",
+        })
+      );
 
-    window.addEventListener("storage", handleStudentsUpdated);
-    window.addEventListener("studentsUpdated", handleStudentsUpdated);
-    return () => {
-      window.removeEventListener("storage", handleStudentsUpdated);
-      window.removeEventListener("studentsUpdated", handleStudentsUpdated);
-    };
-  }, []);
+      setStudents(formattedStudents);
+
+    } catch (error) {
+
+      console.log(error);
+
+    }
+  };
+
+  fetchStudents();
+
+}, []);
 
   return (
     <section>

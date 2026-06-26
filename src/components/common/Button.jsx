@@ -1,5 +1,6 @@
 function Button({
   text,
+  icon,
   onClick,
   type = "button",
   variant = "primary",
@@ -8,7 +9,7 @@ function Button({
 
   const variants = {
     primary:
-      "bg-blue-600 hover:bg-blue-700 text-white",
+      "bg-blue-400 hover:bg-blue-600 text-white",
 
     danger:
       "bg-red-500 hover:bg-red-600 text-white",
@@ -27,8 +28,9 @@ function Button({
     <button
       type={type}
       onClick={onClick}
-      className={`px-5 py-3 rounded-xl transition font-medium ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-5 py-1 rounded-xl transition font-medium ${variants[variant]} ${className}`}
     >
+      {icon}
       {text}
     </button>
   );

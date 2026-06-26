@@ -3,62 +3,65 @@ import Layout from "/src/components/layouts/Layout";
 import { Link } from "react-router-dom";
 import Button from "/src/components/common/Button";
 import Table from "/src/components/common/Table";
-import SearchBar from "/src/components/common/SearchBar"; 
+import SearchBar from "/src/components/common/SearchBar";
 import StatusBadge from "/src/components/common/StatusBadge";
+import api from "../../services/api";
+import { FaEdit, FaTrash } from "react-icons/fa";
 function Teachers() {
-  const [teachers, setTeachers] = useState(() => {
-    const savedTeachers = localStorage.getItem("teachers");
-    if (!savedTeachers) {
-      return [
-        {
-          name: "Rahul Sharma",
-          email: "rahul@gmail.com",
-          subject: "Mathematics",
-          status: "Active",
-        },
-        {
-          name: "Priya Verma",
-          email: "priya@gmail.com",
-          subject: "Science",
-          status: "Active",
-        },
-      ];
-    }
+  const [teachers, setTeachers] = useState([]);
+  const fetchTeachers = async () => {
     try {
-      return JSON.parse(savedTeachers);
-    } catch {
-      return [
-        {
-          name: "Rahul Sharma",
-          email: "rahul@gmail.com",
-          subject: "Mathematics",
-          status: "Active",
-        },
-        {
-          name: "Priya Verma",
-          email: "priya@gmail.com",
-          subject: "Science",
-          status: "Active",
-        },
-      ];
+
+      const response = await api.get("/teachers/");
+
+      setTeachers(response.data);
+
+    } catch (error) {
+
+      console.log(error);
+
     }
-  });
+  };
   const [editingIndex, setEditingIndex] = useState(null);
   const [editFormData, setEditFormData] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem("teachers", JSON.stringify(teachers));
-    window.dispatchEvent(new Event("teachersUpdated"));
-  }, [teachers]);
+    fetchTeachers();
+  }, []);
 
   const handleEdit = (index) => {
     setEditingIndex(index);
     setEditFormData({ ...teachers[index] });
   };
 
-  const handleDelete = (index) => {
-    setTeachers((prev) => prev.filter((_, i) => i !== index));
-  };
+ const handleDelete = async (teacherId) => {
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this teacher?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+
+    const response = await api.delete(
+      `/teachers/${teacherId}`
+    );
+
+    alert(response.data.message);
+
+    await fetchTeachers();
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert(
+      error.response?.data?.detail ||
+      "Delete Failed"
+    );
+  }
+};
 
   const handleEditFormChange = (field, value) => {
     setEditFormData((prev) => ({
@@ -67,17 +70,39 @@ function Teachers() {
     }));
   };
 
-  const handleSaveEdit = () => {
-    if (editingIndex === null || !editFormData) return;
+ const handleSaveEdit = async () => {
 
-    setTeachers((prev) => {
-      const updated = [...prev];
-      updated[editingIndex] = editFormData;
-      return updated;
-    });
+  try {
+
+    const response = await api.put(
+      `/teachers/${editFormData._id}`,
+      {
+        name: editFormData.name,
+        email: editFormData.email,
+        subject: editFormData.subject,
+        phone: editFormData.phone || "",
+        address: editFormData.address || "",
+        status: editFormData.status,
+      }
+    );
+
+    alert(response.data.message);
+
+    await fetchTeachers();
+
     setEditingIndex(null);
     setEditFormData(null);
-  };
+
+  } catch (error) {
+
+    console.log(error);
+
+    alert(
+      error.response?.data?.detail ||
+      "Update Failed"
+    );
+  }
+};
 
   const handleCancelEdit = () => {
     setEditingIndex(null);
@@ -91,42 +116,45 @@ function Teachers() {
 
         <div className="flex justify-between items-center mb-8">
 
-  <h1 className="text-4xl font-bold">
-    Teachers Management
-  </h1>
+          <h1 className="text-4xl font-bold">
+            Teachers Management
+          </h1>
 
-  <Link to="/add-teacher">
+          <Link to="/add-teacher">
 
-    <Button text="Add Teacher" />
+            <Button  text="Add Teacher"   className="px-5 py-3 rounded-xl shadow-md" />
 
-  </Link>
+          </Link>
 
-</div>
-    
+        </div>
+
 
         <SearchBar placeholder="Search Teachers..." />
         <Table
           columns={["Name", "Email", "Subject", "Status"]}
-          data={teachers.map((teacher, idx) => ({
+          data={teachers.map((teacher) => ({
             ...teacher,
-            _index: idx,
             class: teacher.subject,
             status: <StatusBadge status={teacher.status} />,
           }))}
           renderActions={(item) => (
             <div className="flex gap-2">
-              <Button
-                text="Edit"
-                variant="warning"
-                className="px-4 py-2 text-sm"
-                onClick={() => handleEdit(item._index)}
-              />
-              <Button
-                text="Delete"
-                variant="danger"
-                className="px-4 py-2 text-sm"
-                onClick={() => handleDelete(item._index)}
-              />
+              <button
+                onClick={() => handleEdit(
+                  teachers.findIndex(
+                    (teacher) => teacher._id === item._id
+                  )
+                )}
+                className="text-slate-700 hover:text-blue-600 transition"
+              >
+                <FaEdit size={18} />
+              </button>
+              <button
+                onClick={() => handleDelete(item._id)}
+                className="text-slate-700 hover:text-red-600 transition"
+              >
+                <FaTrash size={18} />
+              </button>
             </div>
           )}
         />
