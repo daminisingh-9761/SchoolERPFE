@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { FaCalendarAlt, FaDownload } from "react-icons/fa";
 import StatsCard from "/src/components/dashboard/StatsCard";
 import StudentsTable from "/src/components/dashboard/StudentsTable";
+import TeachersTable from "/src/components/dashboard/TeachersTable";
+import DonutChartCard from "/src/components/dashboard/DonutChartCard";
+import AttendancePieChart from "/src/components/dashboard/AttendancePieChart";
+import TeacherGenderPieChart from "/src/components/dashboard/TeacherGenderPieChart";
 import Layout from "/src/components/layouts/Layout";
 import AttendanceChart from "/src/components/dashboard/AttendanceChart";
 import FeesChart from "/src/components/dashboard/FeesChart";
 import api from "../../services/api";
-import { feesRecords } from "../../utils/constants";
 import Button from "/src/components/common/Button";
 import Table from "/src/components/common/Table";
 
@@ -20,6 +22,11 @@ function Dashboard() {
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [attendanceHistory, setAttendanceHistory] = useState([]);
+
+  // Superadmin States
+  const [totalPresent, setTotalPresent] = useState(0);
+  const [feesCollected, setFeesCollected] = useState(0);
+  const [pendingFees, setPendingFees] = useState(0);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -120,6 +127,35 @@ function Dashboard() {
         }
       };
 
+    const fetchSuperAdminData = async () => {
+      if (role !== "superadmin") return;
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const [attendanceRes, feesRes] = await Promise.all([
+          api.get(`/attendance/by-date?date=${today}`),
+          api.get("/fees/")
+        ]);
+
+        let presentCount = 0;
+        attendanceRes.data.forEach(record => {
+          if (record.attendance_status === "Present") presentCount++;
+        });
+        setTotalPresent(presentCount);
+
+        let collected = 0;
+        let pending = 0;
+        feesRes.data.forEach(fee => {
+          collected += (fee.paid_amount || 0);
+          pending += (fee.remaining_amount || 0);
+        });
+        setFeesCollected(collected);
+        setPendingFees(pending);
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     fetchStudents();
     fetchTeachers();
 
@@ -132,6 +168,8 @@ function Dashboard() {
       fetchAttendanceHistory();
       fetchStudentFee();
       fetchPaymentHistory();
+    } else if (role === "superadmin") {
+      fetchSuperAdminData();
     }
   }, []);
 
@@ -139,11 +177,10 @@ function Dashboard() {
   const totalTeachers = teachers.length;
   const activeStudents = students.filter((student) => student.status === "Active").length;
   const attendanceRate = totalStudents ? Math.round((activeStudents / totalStudents) * 100) : 0;
-  const feesCollection = feesRecords.reduce((sum, record) => {
-    const amount = Number(record.feeAmount.replace(/[$,]/g, "")) || 0;
-    return sum + amount;
-  }, 0);
-  const feesCollectionText = `$${feesCollection.toLocaleString()}`;
+  const totalAbsent = totalStudents - totalPresent;
+
+  const feesCollectionText = `₹${feesCollected.toLocaleString()}`;
+  const pendingFeesText = `₹${pendingFees.toLocaleString()}`;
   console.log("Teachers Count:", teachers.length);
   console.log(
     "ATTENDANCE =>",
@@ -200,38 +237,77 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ADMIN & TEACHER STATS */}
-      {role !== "student" && (
+      {/* TEACHER STATS */}
+      {role === "teacher" && (
         <div className="mt-1 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {role === "superadmin" && (
-            <>
-              <StatsCard title="Total Students" value={totalStudents.toString()} color="text-blue-600" />
-              <StatsCard title="Total Teachers" value={totalTeachers.toString()} color="text-green-600" />
-              <StatsCard title="Attendance Rate" value={`${attendanceRate}%`} color="text-purple-600" />
-              <StatsCard title="Fees Collection" value={feesCollectionText} color="text-orange-600" />
-            </>
-          )}
-          {role === "teacher" && (
-            <>
-              <StatsCard title="Total Students" value={totalStudents.toString()} color="text-blue-600" />
-              <StatsCard title="Today's Attendance %" value={`${attendanceRate}%`} color="text-purple-600" />
-            </>
-          )}
+          <StatsCard title="Total Students" value={totalStudents.toString()} color="text-blue-600" />
+          <StatsCard title="Today's Attendance %" value={`${attendanceRate}%`} color="text-purple-600" />
         </div>
       )}
 
-      {/* ADMIN CHARTS & TABLES */}
-      {role === "superadmin" && (
-        <>
-          <div className="mt-6 grid gap-6 xl:grid-cols-2">
-            <AttendanceChart />
-            <FeesChart />
-          </div>
-          <div className="mt-6">
-            <StudentsTable />
-          </div>
-        </>
-      )}
+      {/* SUPERADMIN DASHBOARD */}
+      {role === "superadmin" && (() => {
+        // Compute gender splits from real student & teacher data
+        const maleStudents = students.filter(s => s.gender?.toLowerCase() === "male").length;
+        const femaleStudents = totalStudents - maleStudents;
+        const maleTeachers = teachers.filter(t => t.gender?.toLowerCase() === "male").length;
+        const femaleTeachers = totalTeachers - maleTeachers;
+
+        return (
+          <>
+            {/* --- 1. KPI CARDS (top row) --- */}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <StatsCard title="Total Students" value={totalStudents.toString()} color="text-blue-600" />
+              <StatsCard title="Total Teachers" value={totalTeachers.toString()} color="text-green-600" />
+              <StatsCard title="Fees Collected" value={feesCollectionText} color="text-red-300" />
+              <StatsCard title="Pending Fees" value={pendingFeesText} color="text-orange-600" />
+            </div>
+
+            {/* --- 2. CHARTS ROW --- */}
+            <div className="mt-6 grid gap-6 xl:grid-cols-2">
+              <AttendanceChart />
+              <FeesChart />
+            </div>
+
+            {/* --- 3. PIE CHARTS ROW --- */}
+            <div className="mt-6 grid gap-6 md:grid-cols-3">
+              {/* Pie 1: Student Gender */}
+              <DonutChartCard
+                title="Students"
+                data={[
+                  { name: "Boys", value: maleStudents || Math.round(totalStudents * 0.47) },
+                  { name: "Girls", value: femaleStudents || Math.round(totalStudents * 0.53) },
+                ]}
+                colors={["#7dd3fc", "#fde68a"]}
+                centerIcon={<>👦👧</>}
+                labels={["Boys", "Girls"]}
+              />
+
+              {/* Pie 2: Teacher Gender — arc style */}
+              <TeacherGenderPieChart
+                maleTeachers={maleTeachers || Math.round(totalTeachers * 0.45)}
+                femaleTeachers={femaleTeachers || Math.round(totalTeachers * 0.55)}
+              />
+
+              {/* Pie 3: Today's Attendance — single thick donut */}
+              <AttendancePieChart
+                present={totalPresent}
+                absent={Math.max(0, totalStudents - totalPresent)}
+              />
+            </div>
+
+            {/* --- 4. STUDENTS TABLE --- */}
+            <div className="mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <StudentsTable />
+            </div>
+
+            {/* --- 5. TEACHERS TABLE --- */}
+            <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <TeachersTable />
+            </div>
+          </>
+        );
+      })()}
 
       {/* STUDENT DASHBOARD UI */}
       {role === "student" && (

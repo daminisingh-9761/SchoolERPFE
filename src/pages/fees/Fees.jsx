@@ -3,7 +3,7 @@ import Table from "/src/components/common/Table";
 import { useState, useEffect, useMemo, useRef } from "react";
 import api from "../../services/api";
 import Button from "/src/components/common/Button";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 function Fees() {
   const [search, setSearch] = useState("");
   const [activeCard, setActiveCard] =
@@ -38,14 +38,23 @@ function Fees() {
   const [selectedFee, setSelectedFee] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
 
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFee, setEditFee] = useState(null);
+  const [editFeeAmount, setEditFeeAmount] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const editModalRef = useRef(null);
+
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState("");
   const [feeAmount, setFeeAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [session, setSession] = useState("2026-27");
   const resetForm = () => {
     setSelectedStudent("");
     setFeeAmount("");
     setDueDate("");
+    setSession("2026-27");
   };
 
   const closeModal = () => {
@@ -186,6 +195,7 @@ function Fees() {
         student_id: student._id,
         student_name: student.name,
         class_name: student.class_name,
+        session: session,
         fee_amount: Number(feeAmount),
         due_date: dueDate,
       });
@@ -262,6 +272,42 @@ function Fees() {
     }
   };
 
+  // ── DELETE ──────────────────────────────────────────────
+  const handleDeleteFee = async (row) => {
+    if (!window.confirm(`Delete fee record for "${row.studentName}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/fees/${row.id}`);
+      fetchFees();
+    } catch (error) {
+      console.log(error);
+      alert("Failed to delete. Please try again.");
+    }
+  };
+
+  // ── EDIT ────────────────────────────────────────────────
+  const openEditModal = (row) => {
+    setEditFee(row);
+    setEditFeeAmount(row.feeAmount);
+    setEditDueDate(row.dueDate || "");
+    setShowEditModal(true);
+  };
+
+  const handleEditFee = async () => {
+    if (!editFeeAmount) { alert("Enter fee amount"); return; }
+    try {
+      await api.put(`/fees/${editFee.id}`, {
+        fee_amount: Number(editFeeAmount),
+        due_date: editDueDate,
+      });
+      alert("Fee updated successfully");
+      setShowEditModal(false);
+      fetchFees();
+    } catch (error) {
+      console.log(error);
+      alert("Update failed. Please try again.");
+    }
+  };
+
   return (
 
     <Layout>
@@ -271,6 +317,7 @@ function Fees() {
             <h1 className="text-4xl font-bold text-slate-600">
               Fees Management
             </h1>
+
           </div>
 
           <Button
@@ -353,7 +400,7 @@ function Fees() {
           <select
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
-           className=" w-[200px] border border-slate-300 rounded-xl px-4 py-2 bg-white">
+            className=" w-[200px] border border-slate-300 rounded-xl px-4 py-2 bg-white">
             <option value="All">All Classes</option>
             <option value="8th">8th</option>
             <option value="9th">9th</option>
@@ -377,9 +424,10 @@ function Fees() {
           renderActions={(row) => (
             <div className="flex items-center gap-2">
 
+              {/* Collect Payment */}
               <Button
                 text="Collect Payment"
-                className="bg-slate-500 text-white text-xs px-2 py-1 rounded-lg "
+                className="bg-slate-500 text-white text-xs px-2 py-1 rounded-lg"
                 onClick={() => {
                   setSelectedFee(row);
                   setPaymentAmount("");
@@ -387,16 +435,31 @@ function Fees() {
                 }}
               />
 
+              {/* View History */}
               <button
-                className="text-slate-600 hover:text-blue-600"
-                onClick={() =>
-                  handleViewHistory(
-                    row.studentId,
-                    row
-                  )
-                }
+                title="View History"
+                className="text-slate-500 hover:text-blue-600 transition-colors"
+                onClick={() => handleViewHistory(row.studentId, row)}
               >
-                <FaEye size={18} />
+                <FaEye size={17} />
+              </button>
+
+              {/* Edit */}
+              <button
+                title="Edit Fee"
+                className="text-slate-500 hover:text-amber-500 transition-colors"
+                onClick={() => openEditModal(row)}
+              >
+                <FaEdit size={17} />
+              </button>
+
+              {/* Delete */}
+              <button
+                title="Delete Fee"
+                className="text-slate-500 hover:text-red-600 transition-colors"
+                onClick={() => handleDeleteFee(row)}
+              >
+                <FaTrash size={16} />
               </button>
 
             </div>
@@ -443,11 +506,11 @@ function Fees() {
               className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl"
             >
               <h2 className="text-2xl font-bold mb-5">
-                Assign Fee
+                Assign Fee for this session year
               </h2>
 
               <div className="space-y-4">
-
+                {/* Select Student */}
                 <select
                   value={selectedStudent}
                   onChange={(e) =>
@@ -464,9 +527,30 @@ function Fees() {
                       key={student._id}
                       value={student._id}
                     >
-                      {student.name}
+                      {student.name} ({student.class_name})
                     </option>
                   ))}
+                </select>
+
+
+                <select
+                  value={session}
+                  onChange={(e) =>
+                    setSession(e.target.value)
+                  }
+                  className="w-full border rounded-xl px-4 py-3"
+                >
+                  <option value="2026-27">
+                    Academic Session : 2026-27
+                  </option>
+
+                  <option value="2027-28">
+                    Academic Session : 2027-28
+                  </option>
+
+                  <option value="2028-29">
+                    Academic Session : 2028-29
+                  </option>
                 </select>
 
                 <input
@@ -665,6 +749,68 @@ function Fees() {
           </div>
         )
       }
+
+      {/* ── EDIT FEE MODAL ──────────────────────────────── */}
+      {showEditModal && editFee && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div
+            ref={editModalRef}
+            className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl"
+          >
+            <div className="flex justify-between items-center mb-5">
+              <h2 className="text-2xl font-bold text-slate-800">Edit Fee</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1 mb-5 text-sm text-slate-500">
+              <p><span className="font-semibold text-slate-700">Student:</span> {editFee.studentName}</p>
+              <p><span className="font-semibold text-slate-700">Class:</span> {editFee.class}</p>
+              <p><span className="font-semibold text-slate-700">Paid Amount:</span> ₹{editFee.paidAmount}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-600 mb-1">Fee Amount (₹)</label>
+                <input
+                  type="number"
+                  value={editFeeAmount}
+                  onChange={(e) => setEditFeeAmount(e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="Enter new fee amount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-600 mb-1">Due Date</label>
+                <input
+                  type="date"
+                  value={editDueDate}
+                  onChange={(e) => setEditDueDate(e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  text="Cancel"
+                  variant="secondary"
+                  onClick={() => setShowEditModal(false)}
+                />
+                <Button
+                  text="Save Changes"
+                  variant="primary"
+                  onClick={handleEditFee}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </Layout>
 
